@@ -17,4 +17,6 @@ function(ginkgo_compile_features name)
     if(GINKGO_WITH_IWYU AND GINKGO_IWYU_PATH)
         set_property(TARGET "${name}" PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${GINKGO_IWYU_PATH})
     endif()
+
+    set_target_properties(${name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endfunction()
