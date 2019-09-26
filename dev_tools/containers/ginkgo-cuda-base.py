@@ -11,6 +11,7 @@ Contents:
     git, openssh, doxygen, curl, valgrind, graphviz, jq latest apt version
     build-essential, automake, pkg-config, libtool, latest apt version
     iwyu precompiled version 6.0
+    libthrust-dev latest apt version
 """
 # pylint: disable=invalid-name, undefined-variable, used-before-assignment
 
@@ -39,10 +40,11 @@ Stage0 += environment(variables={'MANPATH': '/usr/local/cuda/doc/man'})
 
 # Setup extra tools
 Stage0 += python()
-Stage0 += cmake(eula=True)
+Stage0 += cmake(eula=True, version='3.14.5')
 Stage0 += apt_get(ospackages=['git', 'openssh-client', 'doxygen', 'curl', 'valgrind', 'graphviz'])
 Stage0 += apt_get(ospackages=['jq', 'iwyu'])
 Stage0 += apt_get(ospackages=['build-essential', 'automake', 'pkg-config', 'libtool'])
+Stage0 += apt_get(ospackages=['libthrust-dev'])
 
 
 # GNU compilers
@@ -64,7 +66,7 @@ Stage0 += shell(commands=clangtidyln)
 if os.path.isdir('bin/'):
     Stage0 += copy(src='bin/*', dest='/usr/bin/')
 
-if os.path.isdir('sonar-scanner/'):
+if os.path.isdir('sonar-scanner/') and float(cuda_version) == float(10.1):
     Stage0 += copy(src='sonar-scanner/', dest='/')
 
 # hwloc
@@ -85,11 +87,26 @@ if float(cuda_version) >= float(9.2):
 intel_versions = {'9.0' : '2017', '9.1' : '2017', '9.2' : '2017', '10.0' : '2018'}
 intel_path = 'intel/parallel_studio_xe_{}/compilers_and_libraries/linux/'.format(intel_versions.get(cuda_version))
 if os.path.isdir(intel_path):
-        Stage0 += copy(src=intel_path+'bin/intel64/', dest='/opt/intel/bin/')
-        Stage0 += copy(src=intel_path+'lib/intel64/', dest='/opt/intel/lib/')
-        Stage0 += copy(src=intel_path+'include/', dest='/opt/intel/include/')
-        Stage0 += environment(variables={'INTEL_LICENSE_FILE': '28518@scclic1.scc.kit.edu'})
-        Stage0 += environment(variables={'PATH': '$PATH:/opt/intel/bin'})
-        Stage0 += environment(variables={'LIBRARY_PATH': '$LIBRARY_PATH:/opt/intel/lib'})
-        Stage0 += environment(variables={'LD_LIBRARY_PATH': '$LD_LIBRARY_PATH:/opt/intel/lib'})
-        Stage0 += environment(variables={'LD_RUN_PATH': '$LD_RUN_PATH:/opt/intel/lib'})
+    Stage0 += copy(src=intel_path+'bin/intel64/', dest='/opt/intel/bin/')
+    Stage0 += copy(src=intel_path+'lib/intel64/', dest='/opt/intel/lib/')
+    Stage0 += copy(src=intel_path+'include/', dest='/opt/intel/include/')
+    Stage0 += environment(variables={'INTEL_LICENSE_FILE': '28518@scclic1.scc.kit.edu'})
+    Stage0 += environment(variables={'PATH': '$PATH:/opt/intel/bin'})
+    Stage0 += environment(variables={'LIBRARY_PATH': '$LIBRARY_PATH:/opt/intel/lib'})
+    Stage0 += environment(variables={'LD_LIBRARY_PATH': '$LD_LIBRARY_PATH:/opt/intel/lib'})
+    Stage0 += environment(variables={'LD_RUN_PATH': '$LD_RUN_PATH:/opt/intel/lib'})
+
+
+# HIP
+Stage0 += shell(commands=['cd /var/tmp',
+                          'git clone https://github.com/ROCm-Developer-Tools/HIP.git'])
+Stage0 += shell(commands=['cd /var/tmp/HIP', 'mkdir build', 'cd build',
+                          'cmake ..', 'make install'])
+Stage0 += shell(commands=['cd /var/tmp',
+                          'git clone https://github.com/tcojean/hipBLAS.git'])
+Stage0 += shell(commands=['cd /var/tmp/hipBLAS', 'mkdir build', 'cd build',
+                          'cmake ..', 'make install'])
+Stage0 += shell(commands=['cd /var/tmp',
+                          'git clone https://github.com/tcojean/hipSPARSE.git'])
+Stage0 += shell(commands=['cd /var/tmp/hipSPARSE', 'mkdir build', 'cd build',
+                          'cmake -DBUILD_CUDA=on ..', 'make install'])

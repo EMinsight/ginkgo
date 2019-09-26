@@ -73,6 +73,7 @@ The dockerfiles and container images already generated are:
 + CUDA 9.1, GNU 6, LLVM 4.0, Intel 2017 update 4
 + CUDA 9.2, GNU 7, LLVM 5.0, Intel 2017 update 4
 + CUDA 10.0, GNU 7, LLVM 6.0, Intel 2018 update 1
++ CUDA 10.1, GNU 8, LLVM 6.0, no Intel
 
 ### No CUDA recipe
 Because CUDA limits the versions of compilers it can work with, it is good
