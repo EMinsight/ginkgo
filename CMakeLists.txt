@@ -41,6 +41,8 @@ set(GINKGO_HIP_AMDGPU "" CACHE STRING
 option(GINKGO_JACOBI_FULL_OPTIMIZATIONS "Use all the optimizations for the CUDA Jacobi algorithm" OFF)
 option(BUILD_SHARED_LIBS "Build shared (.so, .dylib, .dll) libraries" ON)
 
+set(GINKGO_CIRCULAR_DEPS_FLAGS "-Wl,--no-undefined")
+
 if(GINKGO_BUILD_TESTS AND (GINKGO_BUILD_CUDA OR GINKGO_BUILD_OMP OR GINKGO_BUILD_HIP))
     message(STATUS "GINKGO_BUILD_TESTS is ON, enabling GINKGO_BUILD_REFERENCE")
     set(GINKGO_BUILD_REFERENCE ON CACHE BOOL "Compile reference CPU kernels" FORCE)

@@ -422,8 +422,7 @@ no-circular-deps:
     BUILD_OMP: "ON"
     BUILD_CUDA: "ON"
     BUILD_HIP: "ON"
-    EXTRA_CMAKE_FLAGS: '-DCMAKE_SHARED_LINKER_FLAGS="-Wl,--no-undefined"
-      -DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-undefined"'
+    EXTRA_CMAKE_FLAGS: '-DGINKGO_CHECK_CIRCULAR_DEPS=on'
   dependencies: []
   allow_failure: no
   tags:
