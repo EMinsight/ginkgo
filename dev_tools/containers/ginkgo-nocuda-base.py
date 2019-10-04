@@ -14,13 +14,14 @@ Contents:
     hwloc, libhwloc-dev, pkg-config latest apt version
     papi: adds package libpfm4, and copy precompiled papi headers and files
           from a directory called 'papi'
+    gpg-agent: latest apt version, for adding custom keys
 """
 # pylint: disable=invalid-name, undefined-variable, used-before-assignment
 
 import os
 
 Stage0.baseimage('ubuntu:18.04')
-
+release_name = 'bionic'
 
 # Setup extra tools
 Stage0 += python()
@@ -30,6 +31,8 @@ Stage0 += apt_get(ospackages=['jq', 'graphviz', 'ghostscript', 'texlive', 'texli
 Stage0 += apt_get(ospackages=['texlive-science', 'texlive-fonts-extra', 'texlive-publishers'])
 Stage0 += apt_get(ospackages=['clang-tidy', 'iwyu'])
 Stage0 += apt_get(ospackages=['hwloc', 'libhwloc-dev', 'pkg-config'])
+Stage0 += apt_get(ospackages=['gpg-agent'])
+Stage0 += apt_get(ospackages=['ca-certificates']) # weird github certificates problem
 
 # GNU compilers
 gnu_version = USERARG.get('gnu', '8')
@@ -37,8 +40,12 @@ Stage0 += gnu(version=gnu_version, extra_repository=True)
 
 # Clang compilers
 llvm_version = USERARG.get('llvm', '7')
-Stage0 += llvm(version=llvm_version, extra_repository=True)
-Stage0 += apt_get(ospackages=['libomp-dev']) #required for openmp+clang
+clang_ver = 'clang-{}'.format(llvm_version)
+repo_ver = ['deb http://apt.llvm.org/{}/ llvm-toolchain-{}-{} main'.format(release_name, release_name, llvm_version)]
+Stage0 += apt_get(ospackages=[clang_ver, 'libomp-dev'], repositories=repo_ver, keys=['https://apt.llvm.org/llvm-snapshot.gpg.key'])
+clang_update = 'update-alternatives --install /usr/bin/clang clang /usr/bin/clang-{} 90'.format(llvm_version)
+clangpp_update = 'update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang-{} 90'.format(llvm_version)
+Stage0 += shell(commands=[clang_update, clangpp_update])
 
 # Copy PAPI libs
 add_papi = USERARG.get('papi', 'False')

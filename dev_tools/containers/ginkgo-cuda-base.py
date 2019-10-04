@@ -12,6 +12,7 @@ Contents:
     build-essential, automake, pkg-config, libtool, latest apt version
     iwyu precompiled version 6.0
     libthrust-dev latest apt version
+    gnupg-agent: latest apt version, for adding custom keys
 """
 # pylint: disable=invalid-name, undefined-variable, used-before-assignment
 
@@ -19,6 +20,7 @@ import os
 
 cuda_version = USERARG.get('cuda', '10.0')
 
+release_name = 'xenial'
 image = 'nvidia/cuda:{}-devel-ubuntu16.04'.format(cuda_version)
 Stage0.baseimage(image)
 
@@ -45,16 +47,24 @@ Stage0 += apt_get(ospackages=['git', 'openssh-client', 'doxygen', 'curl', 'valgr
 Stage0 += apt_get(ospackages=['jq', 'iwyu'])
 Stage0 += apt_get(ospackages=['build-essential', 'automake', 'pkg-config', 'libtool'])
 Stage0 += apt_get(ospackages=['libthrust-dev'])
-
+Stage0 += apt_get(ospackages=['gnupg-agent'])
+Stage0 += apt_get(ospackages=['ca-certificates']) # weird github certificates problem
 
 # GNU compilers
 gnu_version = USERARG.get('gnu', '7')
 Stage0 += gnu(version=gnu_version, extra_repository=True)
+gcov_update = ['update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-{} 90'.format(gnu_version)]
+Stage0 += shell(commands=gcov_update)
 
 # Clang compilers
-llvm_version = USERARG.get('llvm', '6.0')
-Stage0 += llvm(version=llvm_version, extra_repository=True)
-Stage0 += apt_get(ospackages=['libomp-dev']) #required for openmp+clang
+llvm_version = USERARG.get('llvm', '7')
+clang_ver = 'clang-{}'.format(llvm_version)
+repo_ver = ['deb http://apt.llvm.org/{}/ llvm-toolchain-{}-{} main'.format(release_name, release_name, llvm_version)]
+Stage0 += apt_get(ospackages=[clang_ver, 'libomp-dev'], repositories=repo_ver, keys=['https://apt.llvm.org/llvm-snapshot.gpg.key'])
+clang_update = 'update-alternatives --install /usr/bin/clang clang /usr/bin/clang-{} 90'.format(llvm_version)
+clangpp_update = 'update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang-{} 90'.format(llvm_version)
+Stage0 += shell(commands=[clang_update, clangpp_update])
+
 
 # clang-tidy
 clangtidy = ['clang-tidy-{}'.format(llvm_version)]
@@ -66,7 +76,7 @@ Stage0 += shell(commands=clangtidyln)
 if os.path.isdir('bin/'):
     Stage0 += copy(src='bin/*', dest='/usr/bin/')
 
-if os.path.isdir('sonar-scanner/') and float(cuda_version) == float(10.1):
+if os.path.isdir('sonar-scanner/') and float(cuda_version) >= float(10.0):
     Stage0 += copy(src='sonar-scanner/', dest='/')
 
 # hwloc
@@ -75,6 +85,7 @@ if float(cuda_version) >= float(9.2):
                               'git clone https://github.com/open-mpi/hwloc.git hwloc'])
     Stage0 += shell(commands=['cd /var/tmp/hwloc', './autogen.sh',
                               './configure --prefix=/usr --disable-nvml', 'make -j10', 'make install'])
+    Stage0 += shell(commands=['rm -rf /var/tmp/hwloc'])
 
     # upload valid FineCI topology and set it for hwloc
     if os.path.isfile('topology/fineci.xml'):
@@ -102,11 +113,14 @@ Stage0 += shell(commands=['cd /var/tmp',
                           'git clone https://github.com/ROCm-Developer-Tools/HIP.git'])
 Stage0 += shell(commands=['cd /var/tmp/HIP', 'mkdir build', 'cd build',
                           'cmake ..', 'make install'])
+Stage0 += shell(commands=['rm -rf /var/tmp/HIP'])
 Stage0 += shell(commands=['cd /var/tmp',
                           'git clone https://github.com/tcojean/hipBLAS.git'])
 Stage0 += shell(commands=['cd /var/tmp/hipBLAS', 'mkdir build', 'cd build',
                           'cmake ..', 'make install'])
+Stage0 += shell(commands=['rm -rf /var/tmp/hipBLAS'])
 Stage0 += shell(commands=['cd /var/tmp',
                           'git clone https://github.com/tcojean/hipSPARSE.git'])
 Stage0 += shell(commands=['cd /var/tmp/hipSPARSE', 'mkdir build', 'cd build',
                           'cmake -DBUILD_CUDA=on ..', 'make install'])
+Stage0 += shell(commands=['rm -rf /var/tmp/hipSPARSE'])
