@@ -40,15 +40,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace gko {
 
 
-class device_guard {
+class cuda_device_guard {
 public:
-    device_guard(int device_id)
+    cuda_device_guard(int device_id)
     {
         GKO_ASSERT_NO_CUDA_ERRORS(cudaGetDevice(&original_device_id));
         GKO_ASSERT_NO_CUDA_ERRORS(cudaSetDevice(device_id));
     }
 
-    ~device_guard() noexcept(false)
+    ~cuda_device_guard() noexcept(false)
     {
         /* Ignore the error during stack unwinding for this call */
         if (std::uncaught_exception()) {
