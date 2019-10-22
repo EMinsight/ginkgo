@@ -81,12 +81,15 @@ protected:
 
     std::shared_ptr<const gko::Executor> exec;
     std::unique_ptr<gko::matrix::Permutation<i_type>> mtx;
+
+
 };  // namespace
 
 
 TEST_F(Permutation, CanBeEmpty)
 {
     auto empty = gko::matrix::Permutation<i_type>::create(exec);
+
     assert_empty(empty.get());
 }
 
@@ -94,6 +97,7 @@ TEST_F(Permutation, CanBeEmpty)
 TEST_F(Permutation, ReturnsNullValuesArrayWhenEmpty)
 {
     auto empty = gko::matrix::Permutation<i_type>::create(exec);
+
     ASSERT_EQ(empty->get_const_permutation(), nullptr);
 }
 
@@ -136,9 +140,13 @@ TEST_F(Permutation, KnowsItsSizeAndValues)
 TEST_F(Permutation, CanBeCopied)
 {
     auto mtx_copy = gko::matrix::Permutation<i_type>::create(exec);
+
     mtx_copy->copy_from(mtx.get());
+
     assert_equal_to_original_mtx(mtx.get());
+
     mtx->get_permutation()[0] = 3;
+
     assert_equal_to_original_mtx(mtx_copy.get());
 }
 
@@ -146,7 +154,9 @@ TEST_F(Permutation, CanBeCopied)
 TEST_F(Permutation, CanBeMoved)
 {
     auto mtx_copy = gko::matrix::Permutation<i_type>::create(exec);
+
     mtx_copy->copy_from(std::move(mtx));
+
     assert_equal_to_original_mtx(mtx_copy.get());
 }
 
@@ -154,6 +164,7 @@ TEST_F(Permutation, CanBeMoved)
 TEST_F(Permutation, CanBeCloned)
 {
     auto mtx_clone = mtx->clone();
+
     assert_equal_to_original_mtx(
         dynamic_cast<decltype(mtx.get())>(mtx_clone.get()));
 }
@@ -162,7 +173,9 @@ TEST_F(Permutation, CanBeCloned)
 TEST_F(Permutation, CanBeCleared)
 {
     mtx->clear();
+
     assert_empty(mtx.get());
 }
+
 
 }  // namespace
